@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 
+// Colors resolve via CSS variables so dark mode swaps to muted values.
 function getScoreColor(score) {
-  if (score >= 0.85) return "#4F46E5"; // high confidence - indigo
-  if (score >= 0.70) return "#6366F1"; // medium confidence - lighter indigo
-  return "#94A3B8"; // low confidence - slate
+  if (score >= 0.85) return "rgb(var(--score-high))"; // high confidence
+  if (score >= 0.70) return "rgb(var(--score-mid))";  // medium confidence
+  return "rgb(var(--score-low))";                     // low confidence
 }
 
 export default function ScoreBar({ score }) {
@@ -18,7 +19,7 @@ export default function ScoreBar({ score }) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1 rounded-full bg-slate-200 overflow-hidden">
+      <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-gray-700 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
           style={{ width: `${width}%`, backgroundColor: color }}

@@ -63,7 +63,8 @@ def evaluate():
         results = data.get("results", [])
 
         sources = [
-            (r.get("source") or r.get("filename") or "").lower() for r in results
+            (r.get("source") or r.get("filename") or "").lower().replace(" ", "_").replace("wikipedia:", "")
+            for r in results
         ]
         hit = any(expected.lower() in s for s in sources)
         if hit:

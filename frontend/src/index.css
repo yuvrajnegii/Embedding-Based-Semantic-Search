@@ -2,6 +2,180 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #fafaf9;
+@layer base {
+  :root {
+    --bg-primary: #fafaf9;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f5f5f4;
+    --text-primary: #1c1917;
+    --text-secondary: #57534e;
+    --text-muted: #a8a29e;
+    --border-color: #e7e5e4;
+    --accent-bg: #f0f9ff;
+    --accent-text: #0369a1;
+    --accent-border: #bae6fd;
+    --success-bg: #f0fdf4;
+    --success-text: #166534;
+    --success-border: #86efac;
+    --warning-bg: #fffbeb;
+    --warning-text: #854d0e;
+    --warning-border: #fcd34d;
+    --error-bg: #fef2f2;
+    --error-text: #991b1b;
+    --error-border: #fca5a5;
+
+    /* Light mode: sky-blue accent (unchanged) */
+    --c-primary-50: 240 249 255;
+    --c-primary-100: 224 242 254;
+    --c-primary-200: 186 230 253;
+    --c-primary-300: 125 211 252;
+    --c-primary-400: 56 189 248;
+    --c-primary-500: 14 165 233;
+    --c-primary-600: 2 132 199;
+    --c-primary-700: 3 105 161;
+    --c-primary-800: 7 89 133;
+    --c-primary-900: 12 74 110;
+    --c-primary-950: 8 47 73;
+
+    /* Score bar confidence colors (light) */
+    --score-high: 79 70 229;   /* indigo   #4F46E5 */
+    --score-mid: 99 102 241;   /* indigo   #6366F1 */
+    --score-low: 148 163 184;  /* slate    #94A3B8 */
+  }
+
+  .dark {
+    /* Graphite neutrals */
+    --bg-primary: #0f1115;
+    --bg-secondary: #191c22;
+    --bg-tertiary: #22262e;
+    --text-primary: #d8dde5;
+    --text-secondary: #9aa2b1;
+    --text-muted: #8b94a3;
+    --border-color: #242830;
+    --accent-bg: #1d2a26;
+    --accent-text: #7fa8a0;
+    --accent-border: #304a43;
+    --success-bg: #152420;
+    --success-text: #86b5a8;
+    --success-border: #2f4a42;
+    --warning-bg: #262317;
+    --warning-text: #c9b28a;
+    --warning-border: #4a4128;
+    --error-bg: #2a1b1b;
+    --error-text: #c98f8f;
+    --error-border: #523030;
+
+    /* Dark mode: muted dusty teal accent (Graphite palette) */
+    --c-primary-50: 234 241 239;
+    --c-primary-100: 220 236 234;
+    --c-primary-200: 188 217 212;
+    --c-primary-300: 156 194 187;
+    --c-primary-400: 127 168 160;
+    --c-primary-500: 86 120 111;
+    --c-primary-600: 74 106 97;
+    --c-primary-700: 61 90 82;
+    --c-primary-800: 48 74 67;
+    --c-primary-900: 37 58 52;
+    --c-primary-950: 26 41 37;
+
+    /* Score bar confidence colors (dark) — desaturated, non-neon */
+    --score-high: 103 138 128;  /* muted teal */
+    --score-mid: 120 124 165;   /* muted indigo */
+    --score-low: 92 98 112;     /* gray */
+  }
+
+  * {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-slate-900 text-white font-medium px-4 py-2 rounded-md hover:bg-slate-800 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-200;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-slate-700 font-medium px-4 py-2 rounded-md border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700;
+  }
+
+  .btn-ghost {
+    @apply text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-3 py-1.5 rounded-md text-sm transition-colors dark:text-slate-400 dark:hover:text-white dark:hover:bg-gray-800;
+  }
+
+  .input-base {
+    @apply bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-all duration-150 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-500 dark:focus:ring-primary-400/40 dark:focus:border-primary-400;
+  }
+
+  .card {
+    @apply bg-white border border-slate-200 rounded-lg p-4 shadow-sm transition-all duration-200 hover:shadow-md dark:bg-gray-800 dark:border-gray-700;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 dark:hover:border-gray-600;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.400') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.400');
+    border-radius: 3px;
+  }
+
+  .dark .scrollbar-thin {
+    scrollbar-color: theme('colors.gray.600') transparent;
+  }
+
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.600');
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideUp 0.3s ease-out;
+  }
+
+  .focus-visible-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)] dark:focus-visible:ring-offset-[var(--bg-primary)];
+  }
 }

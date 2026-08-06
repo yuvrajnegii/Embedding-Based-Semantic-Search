@@ -79,30 +79,35 @@ export default function AddTopic({ onTopicAdded }) {
   }
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4">
-      <div className="flex items-center gap-1 mb-2">
-        <button
-          type="button"
-          onClick={() => switchMode("wiki")}
-          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${
-            mode === "wiki"
-              ? "bg-slate-900 text-white"
-              : "text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Wikipedia
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode("pdf")}
-          className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${
-            mode === "pdf"
-              ? "bg-slate-900 text-white"
-              : "text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Upload PDF
-        </button>
+    <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg p-4 mb-4 shadow-sm transition-colors duration-200">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+          Add new topic
+        </p>
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-gray-700 rounded-md p-0.5">
+          <button
+            type="button"
+            onClick={() => switchMode("wiki")}
+            className={`text-xs font-medium px-2.5 py-1 rounded-md transition-all duration-150 ${
+              mode === "wiki"
+                ? "bg-white dark:bg-gray-600 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+            }`}
+          >
+            Wikipedia
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode("pdf")}
+            className={`text-xs font-medium px-2.5 py-1 rounded-md transition-all duration-150 ${
+              mode === "pdf"
+                ? "bg-white dark:bg-gray-600 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+            }`}
+          >
+            Upload PDF
+          </button>
+        </div>
       </div>
 
       {mode === "wiki" ? (
@@ -112,29 +117,40 @@ export default function AddTopic({ onTopicAdded }) {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="e.g. Renaissance art"
-            className="flex-1 bg-white border border-slate-200 rounded-md px-3 py-1.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+            className="input-base flex-1"
+            aria-label="Topic name"
           />
           <button
             type="submit"
             disabled={status?.type === "loading" || !topic.trim()}
-            className="bg-slate-900 text-white text-sm font-medium px-3 py-1.5 rounded-md disabled:opacity-40 hover:bg-slate-800 active:scale-95 transition-transform"
+            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {status?.type === "loading" ? "Adding..." : "Add"}
+            {status?.type === "loading" ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Adding...
+              </span>
+            ) : (
+              "Add"
+            )}
           </button>
         </form>
       ) : (
-        <form onSubmit={handleUploadPdf} className="flex gap-2">
+        <form onSubmit={handleUploadPdf} className="flex gap-2 flex-col sm:flex-row">
           <input
             ref={fileInputRef}
             type="file"
             accept="application/pdf,.pdf"
             onChange={handleFileSelect}
-            className="flex-1 bg-white border border-slate-200 rounded-md px-2 py-1.5 text-xs text-slate-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300"
+            className="flex-1 text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 dark:file:bg-gray-700 dark:file:text-slate-300 dark:hover:file:bg-gray-600 transition-colors"
           />
           <button
             type="submit"
             disabled={status?.type === "loading" || !file}
-            className="bg-slate-900 text-white text-sm font-medium px-3 py-1.5 rounded-md disabled:opacity-40 hover:bg-slate-800 active:scale-95 transition-transform"
+            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {status?.type === "loading" ? "Uploading..." : "Upload"}
           </button>
@@ -143,15 +159,18 @@ export default function AddTopic({ onTopicAdded }) {
 
       {status && status.type !== "loading" && (
         <div
-          className={`text-xs mt-2 ${
-            status.type === "success" ? "text-indigo-600" : "text-red-600"
+          className={`text-xs mt-3 p-2.5 rounded-md animate-slide-down ${
+            status.type === "success"
+              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
           }`}
+          role={status.type === "error" ? "alert" : "status"}
         >
           {status.message}
         </div>
       )}
       {mode === "pdf" && !status && (
-        <div className="text-[11px] text-slate-400 mt-2">
+        <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
           Text-based PDFs only (scanned/image PDFs aren't OCR'd yet) · max {MAX_PDF_MB}MB
         </div>
       )}

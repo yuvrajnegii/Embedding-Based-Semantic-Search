@@ -49,8 +49,8 @@ export default function UploadPdf({ onTopicAdded }) {
   }
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4">
-      <div className="text-xs font-medium text-slate-600 mb-2">
+    <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg p-3 mb-4 transition-colors duration-200">
+      <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
         Or upload a PDF
       </div>
 
@@ -58,12 +58,20 @@ export default function UploadPdf({ onTopicAdded }) {
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className="flex items-center justify-between gap-2 bg-white border border-dashed border-slate-300 rounded-md px-3 py-2.5 cursor-pointer hover:border-indigo-400 transition-colors"
+        className="flex items-center justify-between gap-2 bg-white dark:bg-gray-800 border border-dashed border-slate-300 dark:border-gray-600 rounded-md px-3 py-2.5 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
       >
-        <span className="text-sm text-slate-500 truncate">
+        <span className="text-sm text-slate-500 dark:text-slate-400 truncate">
           {fileName || "Click or drag a PDF here"}
         </span>
-        <span className="text-xs font-medium text-slate-900 flex-shrink-0">
+        <span className="text-xs font-medium text-slate-900 dark:text-white flex-shrink-0">
           {status?.type === "loading" ? "Uploading..." : "Browse"}
         </span>
       </div>
@@ -78,9 +86,12 @@ export default function UploadPdf({ onTopicAdded }) {
 
       {status && status.type !== "loading" && (
         <div
-          className={`text-xs mt-2 ${
-            status.type === "success" ? "text-indigo-600" : "text-red-600"
+          className={`text-xs mt-2 p-2 rounded-md ${
+            status.type === "success"
+              ? "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-900/20"
+              : "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-900/20"
           }`}
+          role={status.type === "error" ? "alert" : "status"}
         >
           {status.message}
         </div>

@@ -11,6 +11,7 @@ export default function RevealSection({ children, className = "" }) {
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "translateY(0)" : "translateY(24px)",
         transition: "opacity 0.6s ease, transform 0.6s ease",
+        willChange: "opacity, transform",
       }}
     >
       {children}
