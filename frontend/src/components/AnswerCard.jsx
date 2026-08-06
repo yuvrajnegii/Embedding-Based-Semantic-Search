@@ -56,7 +56,7 @@ const markdownComponents = {
   hr: () => <hr className="border-slate-200 dark:border-gray-700 my-3" />,
 };
 
-export default function AnswerCard({ answer, model, sourcesUsed, isStreaming }) {
+export default function AnswerCard({ answer, sourcesUsed, isStreaming }) {
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -77,7 +77,6 @@ export default function AnswerCard({ answer, model, sourcesUsed, isStreaming }) 
           </div>
           <div>
             <p className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide">AI Answer</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{model}</p>
           </div>
         </div>
         <button

@@ -224,7 +224,6 @@ export default function App() {
           {answer && (
             <AnswerCard
               answer={answer.text}
-              model={answer.model}
               sourcesUsed={answer.sourcesUsed}
               isStreaming={isLoading && mode === "ask"}
             />
