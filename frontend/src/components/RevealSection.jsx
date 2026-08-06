@@ -1,20 +1,15 @@
-import { useScrollReveal } from "../hooks/useScrollReveal";
+import { motion } from "framer-motion";
 
 export default function RevealSection({ children, className = "" }) {
-  const [ref, isVisible] = useScrollReveal();
-
   return (
-    <div
-      ref={ref}
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
       className={className}
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(24px)",
-        transition: "opacity 0.6s ease, transform 0.6s ease",
-        willChange: "opacity, transform",
-      }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

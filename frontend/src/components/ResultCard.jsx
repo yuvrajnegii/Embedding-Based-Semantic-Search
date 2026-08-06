@@ -1,36 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import ScoreBar from "./ScoreBar";
 import { useToast } from "../context/ToastContext";
 import { highlightTerms } from "../utils/highlight";
 
 export default function ResultCard({ result, isTopResult, index = 0, query }) {
   const [expanded, setExpanded] = useState(false);
-  const [visible, setVisible] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), index * 60);
-    return () => clearTimeout(timer);
-  }, [index]);
-
   const handleCopy = () => {
-    navigator.clipboard.writeText(result.text).then(() => {
-      toast("Copied to clipboard", "success");
-    }).catch(() => {
-      toast("Couldn't copy to clipboard", "error");
-    });
+    navigator.clipboard
+      .writeText(result.text)
+      .then(() => toast("Copied to clipboard", "success"))
+      .catch(() => toast("Couldn't copy to clipboard", "error"));
   };
 
   return (
-    <div
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(8px)",
-        transition: "opacity 0.3s ease, transform 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.4), ease: "easeOut" }}
       className={`
         card card-hover
-        ${isTopResult ? "border-l-4 border-l-primary-500" : ""}
+        ${isTopResult ? "border-l-4 border-l-white" : ""}
       `}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -86,17 +78,17 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
       {expanded && result.chunk_index !== undefined && (
         <div className="pt-2 border-t border-slate-100 dark:border-gray-700">
           <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="badge badge-secondary bg-slate-100 dark:bg-gray-700">
+            <span className="badge bg-slate-100 dark:bg-gray-700">
               Chunk {result.chunk_index}
             </span>
             {result.doc_id && (
-              <span className="badge badge-secondary bg-slate-100 dark:bg-gray-700">
+              <span className="badge bg-slate-100 dark:bg-gray-700">
                 ID: {result.doc_id.slice(0, 12)}...
               </span>
             )}
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

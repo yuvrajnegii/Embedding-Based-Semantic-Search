@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import SearchBar from "./components/SearchBar";
 import ResultCard from "./components/ResultCard";
 import AnswerCard from "./components/AnswerCard";
@@ -6,7 +7,6 @@ import LoadingSkeleton from "./components/LoadingSkeleton";
 import HomePage from "./components/HomePage";
 import AddTopic from "./components/AddTopic";
 import TopicList from "./components/TopicList";
-import ThemeToggle from "./components/ThemeToggle";
 import { useToast } from "./context/ToastContext";
 import { searchDocuments, streamAsk } from "./api";
 
@@ -126,21 +126,22 @@ export default function App() {
       {view === "home" ? (
         <HomePage onGetStarted={() => setView("app")} />
       ) : (
-        <div className="animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <header className="flex items-center justify-between mb-2">
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
               Semantic Search
             </h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setView("home")}
-                className="btn-ghost text-sm"
-                aria-label="Back to home"
-              >
-                ← Home
-              </button>
-              <ThemeToggle />
-            </div>
+            <button
+              onClick={() => setView("home")}
+              className="btn-ghost text-sm"
+              aria-label="Back to home"
+            >
+              ← Home
+            </button>
           </header>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             Search your documents by meaning, not just keywords.
@@ -152,8 +153,8 @@ export default function App() {
                 onClick={() => setMode("search")}
                 className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
                   mode === "search"
-                    ? "bg-primary-600 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-gray-700"
+                    ? "bg-white text-black"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Search
@@ -162,8 +163,8 @@ export default function App() {
                 onClick={() => setMode("ask")}
                 className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
                   mode === "ask"
-                    ? "bg-primary-600 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-gray-700"
+                    ? "bg-white text-black"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 Ask AI
@@ -266,7 +267,7 @@ export default function App() {
                 />
               ))}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

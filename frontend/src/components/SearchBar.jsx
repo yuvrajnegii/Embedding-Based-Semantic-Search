@@ -68,8 +68,8 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
             resize-none overflow-hidden leading-relaxed max-h-40 overflow-y-auto transition-all duration-150
             focus-visible-ring
             ${isFocused
-              ? "border-primary-500 shadow-lg shadow-primary-500/10 dark:border-primary-400"
-              : "border-slate-200 hover:border-slate-300 dark:border-gray-700 dark:hover:border-gray-600"
+              ? "border-white"
+              : "border-[#242728] hover:border-[#3a3d3e]"
             }
             ${isLoading ? "bg-slate-50 dark:bg-gray-800/50" : ""}
             dark:bg-gray-800 dark:text-white dark:placeholder-gray-500
@@ -111,23 +111,22 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
             value={threshold * 100}
             onChange={(e) => onThresholdChange?.(Number(e.target.value) / 100)}
             className={`
-              flex-1 accent-primary-600 h-1.5 rounded appearance-none
+              flex-1 accent-white h-1.5 rounded appearance-none
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-4
               [&::-webkit-slider-thumb]:h-4
               [&::-webkit-slider-thumb]:rounded-full
-              [&::-webkit-slider-thumb]:bg-primary-600
+              [&::-webkit-slider-thumb]:bg-white
               [&::-webkit-slider-thumb]:border-2
-              [&::-webkit-slider-thumb]:border-white
-              [&::-webkit-slider-thumb]:shadow-md
+              [&::-webkit-slider-thumb]:border-[#0d0d0d]
+              [&::-webkit-slider-thumb]:shadow-[0_0_0_1px_#3a3d3e]
               [&::-moz-range-thumb]:w-4
               [&::-moz-range-thumb]:h-4
               [&::-moz-range-thumb]:rounded-full
-              [&::-moz-range-thumb]:bg-primary-600
+              [&::-moz-range-thumb]:bg-white
               [&::-moz-range-thumb]:border-2
-              [&::-moz-range-thumb]:border-white
-              dark:[&::-webkit-slider-thumb]:bg-primary-500
-              dark:[&::-moz-range-thumb]:bg-primary-500
+              [&::-moz-range-thumb]:border-[#0d0d0d]
+              [&::-moz-range-thumb]:shadow-[0_0_0_1px_#3a3d3e]
             `}
             aria-label="Score threshold"
           />
@@ -142,8 +141,8 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
 
       <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">
         Drag the slider to re-rank results live. Press{" "}
-        <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-gray-700 rounded text-slate-700 dark:text-slate-300 font-mono">/</kbd> to focus search,{" "}
-        <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-gray-700 rounded text-slate-700 dark:text-slate-300 font-mono">Esc</kbd> to clear
+        <kbd className="keycap font-sans">/</kbd> to focus search,{" "}
+        <kbd className="keycap font-sans">Esc</kbd> to clear
       </p>
     </form>
   );
