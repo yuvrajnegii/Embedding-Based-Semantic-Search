@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import ScoreBar from "./ScoreBar";
+import { useToast } from "../context/ToastContext";
+import { highlightTerms } from "../utils/highlight";
 
-export default function ResultCard({ result, isTopResult, index = 0 }) {
+export default function ResultCard({ result, isTopResult, index = 0, query }) {
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), index * 60);
@@ -12,7 +15,9 @@ export default function ResultCard({ result, isTopResult, index = 0 }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(result.text).then(() => {
-      // Could add a toast notification here
+      toast("Copied to clipboard", "success");
+    }).catch(() => {
+      toast("Couldn't copy to clipboard", "error");
     });
   };
 
@@ -75,7 +80,7 @@ export default function ResultCard({ result, isTopResult, index = 0 }) {
       </div>
 
       <p className={`text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-1.5 ${expanded ? "" : "line-clamp-3"}`}>
-        {result.text}
+        {highlightTerms(result.text, query)}
       </p>
 
       {expanded && result.chunk_index !== undefined && (

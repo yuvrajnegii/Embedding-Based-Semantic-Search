@@ -1,13 +1,69 @@
-import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { useToast } from "../context/ToastContext";
+
+// Styling for each markdown element so the AI answer reads cleanly in
+// both light and dark mode.
+const markdownComponents = {
+  p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+  h1: ({ children }) => <h1 className="text-xl font-semibold mb-2 mt-4 first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-lg font-semibold mb-2 mt-4 first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-base font-semibold mb-2 mt-3 first:mt-0">{children}</h3>,
+  h4: ({ children }) => <h4 className="text-sm font-semibold mb-1 mt-3 first:mt-0">{children}</h4>,
+  ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+  li: ({ children }) => <li>{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em>{children}</em>,
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="text-primary-600 dark:text-primary-400 underline underline-offset-2 hover:opacity-80"
+    >
+      {children}
+    </a>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-2 border-primary-300 dark:border-primary-700 pl-3 my-3 text-slate-600 dark:text-slate-300 italic">
+      {children}
+    </blockquote>
+  ),
+  pre: ({ children }) => (
+    <pre className="bg-slate-100 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg p-3 my-2 overflow-x-auto text-[13px] leading-relaxed">
+      {children}
+    </pre>
+  ),
+  code: ({ className, children, ...props }) => {
+    // Fenced code blocks carry a "language-*" className; inline code doesn't.
+    const isBlock = Boolean(className);
+    if (isBlock) {
+      return (
+        <code className={`${className} font-mono`} {...props}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code
+        className="bg-slate-100 dark:bg-gray-700 px-1 py-0.5 rounded text-[0.9em] font-mono text-slate-800 dark:text-slate-200"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+  hr: () => <hr className="border-slate-200 dark:border-gray-700 my-3" />,
+};
 
 export default function AnswerCard({ answer, model, sourcesUsed, isStreaming }) {
-  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(answer).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    navigator.clipboard
+      .writeText(answer)
+      .then(() => toast("Answer copied to clipboard", "success"))
+      .catch(() => toast("Couldn't copy to clipboard", "error"));
   };
 
   return (
@@ -27,37 +83,28 @@ export default function AnswerCard({ answer, model, sourcesUsed, isStreaming }) 
         <button
           onClick={handleCopy}
           className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-gray-700 dark:hover:text-slate-300 transition-colors focus-visible-ring"
-          aria-label={copied ? "Copied!" : "Copy answer"}
-          title={copied ? "Copied!" : "Copy to clipboard"}
+          aria-label="Copy answer"
+          title="Copy to clipboard"
         >
-          {copied ? (
-            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-            </svg>
-          )}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
         </button>
       </div>
 
-      <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap mb-3">
-        {answer}
+      <div className="text-sm text-slate-800 dark:text-slate-200">
+        <ReactMarkdown components={markdownComponents}>{answer}</ReactMarkdown>
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 bg-primary-600 ml-0.5 align-middle animate-pulse" aria-hidden="true" />
         )}
-      </p>
+      </div>
 
       {sourcesUsed?.length > 0 && (
-        <div className="pt-3 border-t border-primary-200 dark:border-primary-800">
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+        <div className="pt-3 mt-3 border-t border-primary-200 dark:border-primary-800">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Sources:</span>
             {sourcesUsed.map((src) => (
-              <span
-                key={src}
-                className="badge badge-primary text-xs px-2 py-0.5"
-              >
+              <span key={src} className="badge badge-primary text-xs px-2 py-0.5">
                 {src}
               </span>
             ))}

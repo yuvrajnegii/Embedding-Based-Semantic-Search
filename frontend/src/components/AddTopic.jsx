@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { ingestTopic, ingestPdf } from "../api";
+import { useToast } from "../context/ToastContext";
 
 const MAX_PDF_MB = 20;
 
 export default function AddTopic({ onTopicAdded }) {
+  const { toast } = useToast();
   const [mode, setMode] = useState("wiki"); // "wiki" | "pdf"
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState(null);
@@ -13,6 +15,12 @@ export default function AddTopic({ onTopicAdded }) {
   function switchMode(next) {
     setMode(next);
     setStatus(null);
+  }
+
+  // Errors go to a toast; success stays inline so the ingestion result is visible.
+  function reportError(message) {
+    setStatus(null);
+    toast(message, "error");
   }
 
   async function handleAddTopic(e) {
@@ -31,22 +39,22 @@ export default function AddTopic({ onTopicAdded }) {
         setTopic("");
         onTopicAdded?.(result.topic);
       } else {
-        setStatus({ type: "error", message: result.error });
+        reportError(result.error);
       }
     } catch (err) {
-      setStatus({ type: "error", message: err.message });
+      reportError(err.message);
     }
   }
 
   function handleFileSelect(e) {
     const selected = e.target.files?.[0] ?? null;
     if (selected && !selected.name.toLowerCase().endsWith(".pdf")) {
-      setStatus({ type: "error", message: "Only .pdf files are supported." });
+      reportError("Only .pdf files are supported.");
       setFile(null);
       return;
     }
     if (selected && selected.size > MAX_PDF_MB * 1024 * 1024) {
-      setStatus({ type: "error", message: `PDF exceeds the ${MAX_PDF_MB}MB limit.` });
+      reportError(`PDF exceeds the ${MAX_PDF_MB}MB limit.`);
       setFile(null);
       return;
     }
@@ -71,10 +79,10 @@ export default function AddTopic({ onTopicAdded }) {
         if (fileInputRef.current) fileInputRef.current.value = "";
         onTopicAdded?.(result.topic);
       } else {
-        setStatus({ type: "error", message: result.error });
+        reportError(result.error);
       }
     } catch (err) {
-      setStatus({ type: "error", message: err.message });
+      reportError(err.message);
     }
   }
 
@@ -157,14 +165,10 @@ export default function AddTopic({ onTopicAdded }) {
         </form>
       )}
 
-      {status && status.type !== "loading" && (
+      {status?.type === "success" && (
         <div
-          className={`text-xs mt-3 p-2.5 rounded-md animate-slide-down ${
-            status.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-          }`}
-          role={status.type === "error" ? "alert" : "status"}
+          className="text-xs mt-3 p-2.5 rounded-md bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 animate-slide-down"
+          role="status"
         >
           {status.message}
         </div>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { getTopics, deleteTopic } from "../api";
 import ConfirmModal from "./ConfirmModal";
+import { useToast } from "../context/ToastContext";
 
 export default function TopicList({ refreshKey, onTopicClick }) {
+  const { toast } = useToast();
   const [topics, setTopics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingTopic, setDeletingTopic] = useState(null);
@@ -41,7 +43,7 @@ export default function TopicList({ refreshKey, onTopicClick }) {
       await deleteTopic(topic);
       setTopics((prev) => prev.filter((t) => t !== topic));
     } catch (err) {
-      alert(`Failed to delete: ${err.message}`);
+      toast(`Failed to delete: ${err.message}`, "error");
     } finally {
       setDeletingTopic(null);
       setPendingDelete(null);

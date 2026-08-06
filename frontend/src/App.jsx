@@ -7,9 +7,11 @@ import HomePage from "./components/HomePage";
 import AddTopic from "./components/AddTopic";
 import TopicList from "./components/TopicList";
 import ThemeToggle from "./components/ThemeToggle";
+import { useToast } from "./context/ToastContext";
 import { searchDocuments, streamAsk } from "./api";
 
 export default function App() {
+  const { toast } = useToast();
   const [view, setView] = useState("home");
   const [mode, setMode] = useState("search");
   const [results, setResults] = useState([]);
@@ -43,6 +45,7 @@ export default function App() {
       setMeta({ count: data.count, tookMs: data.took_ms, query: data.query });
     } catch (err) {
       setError(err.message);
+      toast(err.message, "error");
     } finally {
       setIsReRanking(false);
     }
@@ -96,6 +99,7 @@ export default function App() {
             },
             onError: (message) => {
               setError(message);
+              toast(message, "error");
             },
           },
         );
@@ -111,6 +115,7 @@ export default function App() {
       setResults([]);
       setAnswer(null);
       setMeta(null);
+      toast(err.message, "error");
     } finally {
       setIsLoading(false);
     }
@@ -215,12 +220,6 @@ export default function App() {
             </div>
           )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-3 py-2 mb-4 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 animate-slide-down" role="alert">
-              {error}
-            </div>
-          )}
-
           {answer && (
             <AnswerCard
               answer={answer.text}
@@ -263,6 +262,7 @@ export default function App() {
                   result={result}
                   isTopResult={i === 0}
                   index={i}
+                  query={meta?.query || lastQuery}
                 />
               ))}
           </div>
