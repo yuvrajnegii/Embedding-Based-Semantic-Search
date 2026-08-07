@@ -29,7 +29,7 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {isTopResult && (
-              <span className="badge badge-primary text-[10px] px-1.5 py-0.5 shrink-0">
+              <span className="badge badge-primary bg-violet-500/15 text-violet-200 border-violet-400/30 text-[10px] px-1.5 py-0.5 shrink-0">
                 Top Match
               </span>
             )}

@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from backend import config
-from backend.models import SearchRequest, SearchResponse, HealthResponse, AskRequest, AskResponse, IngestTopicRequest, IngestTopicResponse, TopicsResponse, DeleteTopicResponse
+from backend.models import SearchRequest, SearchResponse, HealthResponse, AskRequest, AskResponse, IngestTextRequest, IngestResponse, TopicsResponse, DeleteTopicResponse
 from backend.search import search, get_collection_stats, list_topics, delete_topic
 from backend.generate import generate_answer, generate_answer_stream
-from backend.topic_ingest import ingest_topic
-from backend.file_ingest import ingest_pdf_bytes
+from backend.file_ingest import ingest_file_bytes
+from backend.paste_ingest import ingest_paste
 from backend.search import _get_model, _get_collection
 
 app = FastAPI(
@@ -134,31 +134,37 @@ def ask_stream_endpoint(request: AskRequest):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@app.post("/ingest/topic", response_model=IngestTopicResponse)
-def ingest_topic_endpoint(request: IngestTopicRequest):
+@app.post("/ingest/text", response_model=IngestResponse)
+def ingest_text_endpoint(request: IngestTextRequest):
     try:
-        result = ingest_topic(request.topic)
+        result = ingest_paste(title=request.title, text=request.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {e}")
 
-    return IngestTopicResponse(**result)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return IngestResponse(**result)
 
 
-@app.post("/ingest/pdf", response_model=IngestTopicResponse)
-async def ingest_pdf_endpoint(file: UploadFile = File(...)):
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only .pdf files are supported.")
+@app.post("/ingest/file", response_model=IngestResponse)
+async def ingest_file_endpoint(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file selected.")
 
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     try:
-        result = ingest_pdf_bytes(file.filename, file_bytes)
+        result = ingest_file_bytes(file.filename, file_bytes)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF ingestion failed: {e}")
+        raise HTTPException(status_code=500, detail=f"File ingestion failed: {e}")
 
-    return IngestTopicResponse(**result)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return IngestResponse(**result)
 
 
 @app.get("/topics", response_model=TopicsResponse)

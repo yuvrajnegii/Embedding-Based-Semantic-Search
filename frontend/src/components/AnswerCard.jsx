@@ -91,7 +91,7 @@ export default function AnswerCard({ answer, sourcesUsed, isStreaming }) {
         </button>
       </div>
 
-      <div className="text-sm text-slate-800 dark:text-slate-200">
+      <div className="text-sm text-violet-300 dark:text-violet-200">
         <ReactMarkdown components={markdownComponents}>{answer}</ReactMarkdown>
         {isStreaming && (
           <span className="inline-block w-1.5 h-4 bg-primary-600 ml-0.5 align-middle animate-pulse" aria-hidden="true" />
@@ -101,7 +101,7 @@ export default function AnswerCard({ answer, sourcesUsed, isStreaming }) {
       {sourcesUsed?.length > 0 && (
         <div className="pt-3 mt-3 border-t border-primary-200 dark:border-primary-800">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Sources:</span>
+            <span className="text-xs font-semibold text-slate-300 dark:text-slate-300">Sources:</span>
             {sourcesUsed.map((src) => (
               <span key={src} className="badge badge-primary text-xs px-2 py-0.5">
                 {src}

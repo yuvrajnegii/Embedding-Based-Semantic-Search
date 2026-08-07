@@ -1,9 +1,15 @@
 import { useRef, useState } from "react";
-import { ingestPdf } from "../api";
+import { ingestFile } from "../api";
 
 const MAX_MB = 20;
+const ALLOWED_EXTENSIONS = [".pdf", ".txt", ".docx"];
 
-export default function UploadPdf({ onTopicAdded }) {
+function isAllowed(name) {
+  const ext = name.toLowerCase().split(".").pop();
+  return ALLOWED_EXTENSIONS.includes(`.${ext}`);
+}
+
+export default function UploadFile({ onTopicAdded }) {
   const [status, setStatus] = useState(null); // { type: "loading"|"success"|"error", message }
   const [fileName, setFileName] = useState("");
   const inputRef = useRef(null);
@@ -11,8 +17,8 @@ export default function UploadPdf({ onTopicAdded }) {
   async function handleFile(file) {
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setStatus({ type: "error", message: "Please choose a .pdf file." });
+    if (!isAllowed(file.name)) {
+      setStatus({ type: "error", message: "Please choose a .pdf, .txt, or .docx file." });
       return;
     }
 
@@ -25,7 +31,7 @@ export default function UploadPdf({ onTopicAdded }) {
     setStatus({ type: "loading", message: `Uploading "${file.name}"...` });
 
     try {
-      const result = await ingestPdf(file);
+      const result = await ingestFile(file);
       if (result.success) {
         setStatus({
           type: "success",
@@ -51,7 +57,7 @@ export default function UploadPdf({ onTopicAdded }) {
   return (
     <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg p-3 mb-4 transition-colors duration-200">
       <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-        Or upload a PDF
+        Or upload a file
       </div>
 
       <div
@@ -69,9 +75,9 @@ export default function UploadPdf({ onTopicAdded }) {
         }}
       >
         <span className="text-sm text-slate-500 dark:text-slate-400 truncate">
-          {fileName || "Click or drag a PDF here"}
+          {fileName || "Click or drag a file here"}
         </span>
-        <span className="text-xs font-medium text-slate-900 dark:text-white flex-shrink-0">
+        <span className="btn-primary text-xs px-3 py-1.5 flex-shrink-0">
           {status?.type === "loading" ? "Uploading..." : "Browse"}
         </span>
       </div>
@@ -79,7 +85,7 @@ export default function UploadPdf({ onTopicAdded }) {
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,application/pdf"
+        accept=".pdf,.txt,.docx"
         className="hidden"
         onChange={(e) => handleFile(e.target.files?.[0])}
       />

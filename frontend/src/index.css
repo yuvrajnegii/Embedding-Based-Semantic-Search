@@ -98,7 +98,7 @@
   }
 
   .badge-primary {
-    @apply bg-[#101111] text-slate-200 border border-[#242728];
+    @apply bg-[#1a1b1d] text-white border border-[#3a3d3e];
   }
 
   /* Keyboard shortcut glyph — the brand's only "depth" decoration. */

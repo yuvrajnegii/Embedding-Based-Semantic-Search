@@ -1,16 +1,19 @@
-import { useRef, useState } from "react";
-import { ingestTopic, ingestPdf } from "../api";
+import { useState } from "react";
+import { ingestText } from "../api";
 import { useToast } from "../context/ToastContext";
+import UploadFile from "./UploadFile";
 
-const MAX_PDF_MB = 20;
+const EXAMPLE = {
+  title: "The Water Cycle",
+  text: `Water moves continuously through Earth's atmosphere, oceans, and land in a cycle driven by the sun's energy. The main processes are evaporation, condensation, and precipitation. Heat from the sun causes water from oceans, lakes, and rivers to evaporate into water vapor. As the vapor rises and cools, it condenses into clouds. When the droplets grow heavy enough, they fall back to the surface as rain or snow. Some precipitation soaks into the ground as groundwater, while the rest flows over land into rivers and back to the ocean, where the cycle begins again.`,
+};
 
 export default function AddTopic({ onTopicAdded }) {
   const { toast } = useToast();
-  const [mode, setMode] = useState("wiki"); // "wiki" | "pdf"
-  const [topic, setTopic] = useState("");
-  const [file, setFile] = useState(null);
+  const [mode, setMode] = useState("text"); // "text" | "pdf"
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
   const [status, setStatus] = useState(null); // { type: "loading"|"success"|"error", message }
-  const fileInputRef = useRef(null);
 
   function switchMode(next) {
     setMode(next);
@@ -23,60 +26,27 @@ export default function AddTopic({ onTopicAdded }) {
     toast(message, "error");
   }
 
-  async function handleAddTopic(e) {
-    e.preventDefault();
-    if (!topic.trim()) return;
-
-    setStatus({ type: "loading", message: `Fetching "${topic}"...` });
-
-    try {
-      const result = await ingestTopic(topic.trim());
-      if (result.success) {
-        setStatus({
-          type: "success",
-          message: `Added "${result.topic}" (${result.chunks_added} chunks). You can ask about it now.`,
-        });
-        setTopic("");
-        onTopicAdded?.(result.topic);
-      } else {
-        reportError(result.error);
-      }
-    } catch (err) {
-      reportError(err.message);
-    }
-  }
-
-  function handleFileSelect(e) {
-    const selected = e.target.files?.[0] ?? null;
-    if (selected && !selected.name.toLowerCase().endsWith(".pdf")) {
-      reportError("Only .pdf files are supported.");
-      setFile(null);
-      return;
-    }
-    if (selected && selected.size > MAX_PDF_MB * 1024 * 1024) {
-      reportError(`PDF exceeds the ${MAX_PDF_MB}MB limit.`);
-      setFile(null);
-      return;
-    }
+  function loadExample() {
+    setTitle(EXAMPLE.title);
+    setText(EXAMPLE.text);
     setStatus(null);
-    setFile(selected);
   }
 
-  async function handleUploadPdf(e) {
+  async function handleAddText(e) {
     e.preventDefault();
-    if (!file) return;
+    if (!title.trim() || !text.trim()) return;
 
-    setStatus({ type: "loading", message: `Uploading "${file.name}"...` });
+    setStatus({ type: "loading", message: `Adding "${title.trim()}"...` });
 
     try {
-      const result = await ingestPdf(file);
+      const result = await ingestText({ title: title.trim(), text: text.trim() });
       if (result.success) {
         setStatus({
           type: "success",
           message: `Added "${result.topic}" (${result.chunks_added} chunks). You can ask about it now.`,
         });
-        setFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
+        setTitle("");
+        setText("");
         onTopicAdded?.(result.topic);
       } else {
         reportError(result.error);
@@ -90,19 +60,19 @@ export default function AddTopic({ onTopicAdded }) {
     <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg p-4 mb-4 shadow-sm transition-colors duration-200">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-          Add new topic
+          Add new content
         </p>
         <div className="flex items-center gap-1 bg-slate-100 dark:bg-gray-700 rounded-md p-0.5">
           <button
             type="button"
-            onClick={() => switchMode("wiki")}
+            onClick={() => switchMode("text")}
             className={`text-xs font-medium px-2.5 py-1 rounded-md transition-all duration-150 ${
-              mode === "wiki"
+              mode === "text"
                 ? "bg-white dark:bg-gray-600 text-slate-900 dark:text-white shadow-sm"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Wikipedia
+            Paste text
           </button>
           <button
             type="button"
@@ -113,56 +83,48 @@ export default function AddTopic({ onTopicAdded }) {
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
             }`}
           >
-            Upload PDF
+            Upload file
           </button>
         </div>
       </div>
 
-      {mode === "wiki" ? (
-        <form onSubmit={handleAddTopic} className="flex gap-2">
+      {mode === "text" ? (
+        <form onSubmit={handleAddText} className="flex flex-col gap-2">
           <input
             type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. Renaissance art"
-            className="input-base flex-1"
-            aria-label="Topic name"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title, e.g. Meeting notes"
+            className="input-base w-full"
+            aria-label="Title"
           />
-          <button
-            type="submit"
-            disabled={status?.type === "loading" || !topic.trim()}
-            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {status?.type === "loading" ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Adding...
-              </span>
-            ) : (
-              "Add"
-            )}
-          </button>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Paste your text here..."
+            rows={5}
+            className="input-base w-full resize-y"
+            aria-label="Pasted text"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={loadExample}
+              className="btn-ghost text-sm"
+            >
+              Try an example
+            </button>
+            <button
+              type="submit"
+              disabled={status?.type === "loading" || !title.trim() || !text.trim()}
+              className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed ml-auto"
+            >
+              {status?.type === "loading" ? "Adding..." : "Add"}
+            </button>
+          </div>
         </form>
       ) : (
-        <form onSubmit={handleUploadPdf} className="flex gap-2 flex-col sm:flex-row">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf,.pdf"
-            onChange={handleFileSelect}
-            className="flex-1 text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 dark:file:bg-gray-700 dark:file:text-slate-300 dark:hover:file:bg-gray-600 transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={status?.type === "loading" || !file}
-            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {status?.type === "loading" ? "Uploading..." : "Upload"}
-          </button>
-        </form>
+        <UploadFile onTopicAdded={onTopicAdded} />
       )}
 
       {status?.type === "success" && (
@@ -175,7 +137,7 @@ export default function AddTopic({ onTopicAdded }) {
       )}
       {mode === "pdf" && !status && (
         <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
-          Text-based PDFs only (scanned/image PDFs aren't OCR'd yet) · max {MAX_PDF_MB}MB
+          Supports .pdf, .txt, and .docx (scanned/image PDFs aren't OCR'd yet) · max 20MB
         </div>
       )}
     </div>

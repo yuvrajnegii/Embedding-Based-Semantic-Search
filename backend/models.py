@@ -40,11 +40,12 @@ class AskResponse(BaseModel):
     took_ms: float
 
 
-class IngestTopicRequest(BaseModel):
-    topic: str = Field(..., min_length=1, description="Wikipedia topic to fetch and embed")
+class IngestTextRequest(BaseModel):
+    title: str = Field(..., min_length=1, description="Human-readable title/label for the pasted text")
+    text: str = Field(..., min_length=1, description="Plain text content to ingest")
 
 
-class IngestTopicResponse(BaseModel):
+class IngestResponse(BaseModel):
     success: bool
     topic: Optional[str] = None
     chunks_added: Optional[int] = None

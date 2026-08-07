@@ -88,11 +88,11 @@ export async function streamAsk({ query, topK = 5, scoreThreshold = 0.0 }, callb
   }
 }
 
-export async function ingestTopic(topic) {
-  const response = await fetch(`${API_BASE_URL}/ingest/topic`, {
+export async function ingestText({ title, text }) {
+  const response = await fetch(`${API_BASE_URL}/ingest/text`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic }),
+    body: JSON.stringify({ title, text }),
   });
 
   if (!response.ok) {
@@ -103,18 +103,18 @@ export async function ingestTopic(topic) {
   return response.json();
 }
 
-export async function ingestPdf(file) {
+export async function ingestFile(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/ingest/pdf`, {
+  const response = await fetch(`${API_BASE_URL}/ingest/file`, {
     method: "POST",
     body: formData,
   });
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.detail || `PDF upload failed with status ${response.status}`);
+    throw new Error(errorBody.detail || `Upload failed with status ${response.status}`);
   }
 
   return response.json();
