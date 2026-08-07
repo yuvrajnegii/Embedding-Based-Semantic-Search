@@ -8,6 +8,9 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
   const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
 
+  // Convert backend 0-1 score to 0-100 percentage for display
+  const displayScore = Math.round((result.score || 0) * 100);
+
   const handleCopy = () => {
     navigator.clipboard
       .writeText(result.text)
@@ -27,7 +30,7 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {isTopResult && (
               <span className="badge badge-primary bg-violet-500/15 text-violet-200 border-violet-400/30 text-[10px] px-1.5 py-0.5 shrink-0">
                 Top Match
@@ -43,7 +46,7 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={handleCopy}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-gray-700 dark:hover:text-slate-300 transition-colors focus-visible-ring"
@@ -68,7 +71,7 @@ export default function ResultCard({ result, isTopResult, index = 0, query }) {
       </div>
 
       <div className="mb-2">
-        <ScoreBar score={result.score} />
+        <ScoreBar score={displayScore} />
       </div>
 
       <p className={`text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-1.5 ${expanded ? "" : "line-clamp-3"}`}>

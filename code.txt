@@ -1,0 +1,372 @@
+function SearchPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [docs, setDocs] = useState(initialDocs);
+  const [query, setQuery] = useState(
+    new URLSearchParams(location.search).get("q") || ""
+  );
+  const [mode, setMode] = useState("search");
+  const [threshold, setThreshold] = useState(65);
+  const [controls, setControls] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const filtered = useMemo(() => {
+    if (!query) return [];
+
+    const firstWord = query.toLowerCase().split(" ")[0];
+
+    return docs.filter((document) => {
+      const searchableText =
+        `${document.title} ${document.excerpt}`.toLowerCase();
+
+      return (
+        searchableText.includes(firstWord) ||
+        document.score >= threshold
+      );
+    });
+  }, [docs, query, threshold]);
+
+  const runSearch = () => {
+    if (!query.trim()) return;
+
+    setLoading(true);
+
+    window.setTimeout(() => {
+      setLoading(false);
+    }, 500);
+  };
+
+  return (
+    <Shell onHome={() => navigate("/")}>
+      <main className="search-page">
+        <header className="page-heading">
+          <div>
+            <p className="eyebrow-small">Semantic workspace</p>
+
+            <h2>Find the thread.</h2>
+
+            <p>
+              Search your corpus with context, not keywords.
+            </p>
+          </div>
+
+          <span
+            className="corpus-count"
+            data-testid="corpus-count"
+          >
+            {docs.length} documents indexed
+          </span>
+        </header>
+
+        <div className="search-layout">
+          <div className="search-main">
+            <div
+              className="mode-switch"
+              data-testid="search-mode-switch"
+            >
+              <button
+                className={mode === "search" ? "active" : ""}
+                data-testid="search-mode-button"
+                onClick={() => setMode("search")}
+              >
+                <Search size={15} />
+                Search
+              </button>
+
+              <button
+                className={mode === "ask" ? "active" : ""}
+                data-testid="ask-mode-button"
+                onClick={() => setMode("ask")}
+              >
+                <Sparkles size={15} />
+                Ask AI
+              </button>
+
+              <span>
+                {mode === "search"
+                  ? "Find matching passages"
+                  : "Synthesize an answer"}
+              </span>
+            </div>
+
+            <div className="search-box">
+              <Search size={21} />
+
+              <input
+                data-testid="semantic-search-input"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    runSearch();
+                  }
+                }}
+                placeholder={
+                  mode === "search"
+                    ? "Search by meaning…"
+                    : "Ask a question about your documents…"
+                }
+              />
+
+              <kbd>↵</kbd>
+
+              <button
+                className="icon-button"
+                data-testid="clear-search-button"
+                onClick={() => setQuery("")}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="search-actions">
+              <button
+                className="search-submit"
+                data-testid="search-submit-button"
+                onClick={runSearch}
+              >
+                {loading
+                  ? "Searching…"
+                  : mode === "ask"
+                    ? "Ask"
+                    : "Search"}
+
+                <ArrowUpRight size={16} />
+              </button>
+
+              <button
+                className="controls-toggle"
+                data-testid="search-controls-toggle"
+                onClick={() => setControls(!controls)}
+              >
+                Search controls
+
+                <ChevronDown
+                  size={15}
+                  className={controls ? "rotate" : ""}
+                />
+              </button>
+            </div>
+
+            {controls && (
+              <div
+                className="controls-panel"
+                data-testid="search-controls-panel"
+              >
+                <label>
+                  Minimum relevance
+
+                  <output data-testid="threshold-value">
+                    {threshold}%
+                  </output>
+                </label>
+
+                <input
+                  type="range"
+                  min="20"
+                  max="95"
+                  value={threshold}
+                  data-testid="threshold-slider"
+                  onChange={(event) =>
+                    setThreshold(event.target.value)
+                  }
+                />
+              </div>
+            )}
+
+            {mode === "ask" && query && (
+              <div
+                className="answer-card"
+                data-testid="answer-card"
+              >
+                <div className="answer-label">
+                  <Sparkles size={14} />
+
+                  Answer · based on{" "}
+                  {filtered.length || docs.length} sources
+                </div>
+
+                <p>
+                  {filtered.length
+                    ? `Your corpus suggests that “${query}” is covered across ${filtered.length} relevant documents. Review the passages below for the precise context.`
+                    : "No answer could be produced yet. Try adding a little more content to your corpus."}
+                </p>
+              </div>
+            )}
+
+            <div className="results-heading">
+              <span>Results</span>
+
+              {query && (
+                <small data-testid="results-count">
+                  {filtered.length} matches
+                </small>
+              )}
+            </div>
+
+            {query ? (
+              filtered.length ? (
+                filtered.map((document, index) => (
+                  <article
+                    className="result-card"
+                    data-testid={`result-card-${index}`}
+                    key={document.title}
+                    style={{
+                      animationDelay: `${index * 80}ms`,
+                    }}
+                  >
+                    <div className="result-top">
+                      <div className="doc-icon">
+                        <FileText size={15} />
+                      </div>
+
+                      <div>
+                        <h3>{document.title}</h3>
+
+                        <span>
+                          {document.type} · {document.size}
+                        </span>
+                      </div>
+
+                      <b>{document.score}%</b>
+                    </div>
+
+                    <p>{document.excerpt}</p>
+
+                    <div className="score-line">
+                      <span
+                        style={{
+                          width: `${document.score}%`,
+                        }}
+                      />
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div
+                  className="empty-state"
+                  data-testid="no-results-state"
+                >
+                  <Search size={22} />
+
+                  <strong>No close matches yet</strong>
+
+                  <span>
+                    Try a broader question or lower the relevance threshold.
+                  </span>
+                </div>
+              )
+            ) : (
+              <div
+                className="empty-state"
+                data-testid="search-empty-state"
+              >
+                <Sparkles size={22} />
+
+                <strong>Your corpus is ready to explore</strong>
+
+                <span>
+                  Ask a question above, or add another document to sharpen
+                  the signal.
+                </span>
+              </div>
+            )}
+          </div>
+
+          <aside>
+            <AddContent
+              onAdd={(document) => {
+                setDocs((currentDocuments) => [
+                  document,
+                  ...currentDocuments,
+                ]);
+              }}
+            />
+
+            <div
+              className="topic-list"
+              data-testid="topic-list"
+            >
+              <div className="section-kicker">
+                <span>Library</span>
+                <strong>Recent content</strong>
+              </div>
+
+              {docs.map((document) => (
+                <div
+                  className="topic-row"
+                  data-testid={`topic-row-${document.title}`}
+                  key={document.title}
+                >
+                  <div className="doc-icon">
+                    <FileText size={14} />
+                  </div>
+
+                  <div>
+                    <strong>{document.title}</strong>
+
+                    <span>
+                      {document.type} · {document.size}
+                    </span>
+                  </div>
+
+                  <i
+                    className="indexed-dot"
+                    title={document.status}
+                  />
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </main>
+    </Shell>
+  );
+}
+The required imports are:
+
+import { useMemo, useState } from "react";
+import {
+  ArrowUpRight,
+  ChevronDown,
+  FileText,
+  Search,
+  Sparkles,
+  X,
+} from "lucide-react";
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+The supporting document data is:
+
+const initialDocs = [
+  {
+    title: "Q4 launch planning",
+    type: "Pasted note",
+    size: "4.2 KB",
+    status: "Indexed",
+    excerpt:
+      "The launch milestone is set for November 14. Engineering freeze begins one week before release.",
+    score: 94,
+  },
+  {
+    title: "Deployment runbook",
+    type: "Markdown",
+    size: "18 KB",
+    status: "Indexed",
+    excerpt:
+      "Production deployments require a green CI pipeline, a reviewed migration, and an approved rollback plan.",
+    score: 87,
+  },
+  {
+    title: "Team sync — October 12",
+    type: "Meeting note",
+    size: "7.8 KB",
+    status: "Indexed",
+    excerpt:
+      "The team decided to keep the current architecture and revisit the queue worker after the beta.",
+    score: 81,
+  },
+];

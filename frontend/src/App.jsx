@@ -22,7 +22,7 @@ export default function App() {
   const [meta, setMeta] = useState(null);
   const [topicsRefreshKey, setTopicsRefreshKey] = useState(0);
   const [prefillQuery, setPrefillQuery] = useState("");
-  const [threshold, setThreshold] = useState(0.0);
+  const [threshold, setThreshold] = useState(0); // percentage 0-100
   const [lastQuery, setLastQuery] = useState("");
   const reRankTimer = useRef(null);
 
@@ -122,7 +122,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {view === "home" ? (
         <HomePage onGetStarted={() => setView("app")} />
       ) : (
@@ -132,7 +132,7 @@ export default function App() {
           transition={{ duration: 0.4, ease: "easeOut" }}
         >
           <header className="flex items-center justify-between mb-2">
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
               Semantic Search
             </h1>
             <button
@@ -147,53 +147,82 @@ export default function App() {
             Search your documents by meaning, not just keywords.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-200 dark:border-gray-700">
-            <div className="flex gap-1 bg-white dark:bg-gray-800 rounded-md p-1 border border-slate-200 dark:border-gray-700">
+          {/* Input Zone */}
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-gray-800/50 rounded-lg border border-slate-200 dark:border-gray-700">
+              <div className="flex gap-1 bg-white dark:bg-gray-800 rounded-md p-1 border border-slate-200 dark:border-gray-700">
+                <button
+                  onClick={() => setMode("search")}
+                  className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
+                    mode === "search"
+                      ? "bg-white text-black"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  Search
+                </button>
+                <button
+                  onClick={() => setMode("ask")}
+                  className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
+                    mode === "ask"
+                      ? "bg-white text-black"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  Ask AI
+                </button>
+              </div>
+
               <button
-                onClick={() => setMode("search")}
-                className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
-                  mode === "search"
-                    ? "bg-white text-black"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
+                onClick={handleReset}
+                title="Clear results"
+                className="btn-ghost text-sm whitespace-nowrap"
               >
-                Search
-              </button>
-              <button
-                onClick={() => setMode("ask")}
-                className={`text-sm px-3 py-1.5 rounded-md transition-all duration-150 ${
-                  mode === "ask"
-                    ? "bg-white text-black"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                Ask AI
+                ↻ Clear
               </button>
             </div>
 
-            <button
-              onClick={handleReset}
-              title="Clear results"
-              className="btn-ghost text-sm whitespace-nowrap"
-            >
-              ↻ Clear
-            </button>
+            <AddTopic onTopicAdded={() => setTopicsRefreshKey((k) => k + 1)} />
+
+            <TopicList
+              refreshKey={topicsRefreshKey}
+              onTopicClick={(topic) => setPrefillQuery(topic)}
+            />
+
+            <SearchBar
+              onSearch={handleSearch}
+              isLoading={isLoading}
+              prefillQuery={prefillQuery}
+              threshold={threshold}
+              onThresholdChange={handleThresholdChange}
+            />
           </div>
 
-          <AddTopic onTopicAdded={() => setTopicsRefreshKey((k) => k + 1)} />
+          {/* Visual separator between input zone and results zone */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200 dark:border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-[var(--bg-primary)] px-4 text-slate-500 dark:text-slate-400">
+                Results
+              </span>
+            </div>
+          </div>
 
-          <TopicList
-            refreshKey={topicsRefreshKey}
-            onTopicClick={(topic) => setPrefillQuery(topic)}
-          />
-
-          <SearchBar
-            onSearch={handleSearch}
-            isLoading={isLoading}
-            prefillQuery={prefillQuery}
-            threshold={threshold}
-            onThresholdChange={handleThresholdChange}
-          />
+          {!meta && !isLoading && !error && results.length === 0 && (
+            <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-14 animate-fade-in">
+              <svg className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <p className="font-medium text-slate-600 dark:text-slate-300">
+                Your corpus is ready to explore
+              </p>
+              <p className="text-xs mt-1.5 max-w-sm mx-auto">
+                Ask a question above to find matches, or add a document to sharpen the signal.
+              </p>
+            </div>
+          )}
 
           {meta && (
             <div className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -205,7 +234,7 @@ export default function App() {
               <span>· {meta.tookMs}ms</span>
               {mode === "search" && (
                 <>
-                  <span>· threshold {threshold.toFixed(2)}</span>
+                  <span>· threshold {threshold}%</span>
                   {isReRanking && (
                     <span className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400">
                       <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" aria-hidden="true">
@@ -236,7 +265,7 @@ export default function App() {
               </svg>
               {mode === "search" ? (
                 <>
-                  <p>No results above a score of {threshold.toFixed(2)}.</p>
+                  <p>No results above a score of {threshold}%.</p>
                   <p className="text-xs mt-1">
                     Slide the threshold lower to surface more results.
                   </p>
@@ -254,7 +283,7 @@ export default function App() {
 
           {isLoading && mode === "search" && <LoadingSkeleton count={3} />}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {!(isLoading && mode === "search") &&
               results.map((result, i) => (
                 <ResultCard

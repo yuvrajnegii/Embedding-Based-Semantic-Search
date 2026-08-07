@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 
 // Colors resolve via CSS variables so dark mode swaps to muted values.
 function getScoreColor(score) {
-  if (score >= 0.85) return "rgb(var(--score-high))"; // high confidence
-  if (score >= 0.70) return "rgb(var(--score-mid))";  // medium confidence
+  // score is now 0-100 percentage
+  if (score >= 85) return "rgb(var(--score-high))"; // high confidence
+  if (score >= 70) return "rgb(var(--score-mid))";  // medium confidence
   return "rgb(var(--score-low))";                     // low confidence
 }
 
 export default function ScoreBar({ score }) {
-  const percent = Math.round(score * 100);
+  // score is now 0-100 percentage
+  const percent = Math.round(score);
   const color = getScoreColor(score);
   const [width, setWidth] = useState(0);
 
@@ -29,7 +31,7 @@ export default function ScoreBar({ score }) {
         className="text-sm font-medium min-w-[2.25rem] text-right"
         style={{ color }}
       >
-        {score.toFixed(2)}
+        {score.toFixed(0)}%
       </span>
     </div>
   );

@@ -1,13 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-export async function searchDocuments({ query, topK = 5, scoreThreshold = 0.0 }) {
+export async function searchDocuments({ query, topK = 5, scoreThreshold = 0 }) {
   const response = await fetch(`${API_BASE_URL}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       query,
       top_k: topK,
-      score_threshold: scoreThreshold,
+      score_threshold: scoreThreshold / 100, // Convert percentage to fraction for backend
     }),
   });
 
@@ -19,14 +19,14 @@ export async function searchDocuments({ query, topK = 5, scoreThreshold = 0.0 })
   return response.json();
 }
 
-export async function askQuestion({ query, topK = 5, scoreThreshold = 0.0 }) {
+export async function askQuestion({ query, topK = 5, scoreThreshold = 0 }) {
   const response = await fetch(`${API_BASE_URL}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       query,
       top_k: topK,
-      score_threshold: scoreThreshold,
+      score_threshold: scoreThreshold / 100, // Convert percentage to fraction for backend
     }),
   });
 
@@ -38,7 +38,7 @@ export async function askQuestion({ query, topK = 5, scoreThreshold = 0.0 }) {
   return response.json();
 }
 
-export async function streamAsk({ query, topK = 5, scoreThreshold = 0.0 }, callbacks) {
+export async function streamAsk({ query, topK = 5, scoreThreshold = 0 }, callbacks) {
   const { onMetadata, onToken, onDone, onError } = callbacks;
 
   const response = await fetch(`${API_BASE_URL}/ask/stream`, {
@@ -47,7 +47,7 @@ export async function streamAsk({ query, topK = 5, scoreThreshold = 0.0 }, callb
     body: JSON.stringify({
       query,
       top_k: topK,
-      score_threshold: scoreThreshold,
+      score_threshold: scoreThreshold / 100, // Convert percentage to fraction for backend
     }),
   });
 

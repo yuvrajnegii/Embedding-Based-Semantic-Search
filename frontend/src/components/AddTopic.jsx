@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ingestText } from "../api";
 import { useToast } from "../context/ToastContext";
 import UploadFile from "./UploadFile";
@@ -14,6 +14,15 @@ export default function AddTopic({ onTopicAdded }) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [status, setStatus] = useState(null); // { type: "loading"|"success"|"error", message }
+  const textareaRef = useRef(null);
+
+  // Auto-grow the paste textarea to fit its content, starting at one line.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [text]);
 
   function switchMode(next) {
     setMode(next);
@@ -99,11 +108,12 @@ export default function AddTopic({ onTopicAdded }) {
             aria-label="Title"
           />
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste your text here..."
-            rows={5}
-            className="input-base w-full resize-y"
+            rows={2}
+            className="input-base w-full resize-none overflow-hidden leading-relaxed max-h-80 overflow-y-auto"
             aria-label="Pasted text"
           />
           <div className="flex items-center gap-2">

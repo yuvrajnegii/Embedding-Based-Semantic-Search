@@ -64,15 +64,14 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
           placeholder="Search your documents... (press / to focus)"
           rows={1}
           className={`
-            flex-1 bg-white border rounded-lg px-4 py-3 text-sm text-slate-900 placeholder-slate-400
+            flex-1 bg-white dark:bg-gray-800 border rounded-lg px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500
             resize-none overflow-hidden leading-relaxed max-h-40 overflow-y-auto transition-all duration-150
             focus-visible-ring
             ${isFocused
               ? "border-white"
-              : "border-[#242728] hover:border-[#3a3d3e]"
+              : "border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600"
             }
             ${isLoading ? "bg-slate-50 dark:bg-gray-800/50" : ""}
-            dark:bg-gray-800 dark:text-white dark:placeholder-gray-500
           `}
           aria-describedby="threshold-help"
         />
@@ -102,16 +101,18 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3" id="threshold-help">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Score threshold</span>
           <input
             type="range"
             min={0}
             max={100}
             step={1}
-            value={threshold * 100}
-            onChange={(e) => onThresholdChange?.(Number(e.target.value) / 100)}
+            value={threshold}
+            onChange={(e) => onThresholdChange?.(Number(e.target.value))}
+            style={{
+              background: `linear-gradient(to right, #ffffff ${threshold}%, #2a2d2e ${threshold}%)`,
+            }}
             className={`
-              flex-1 accent-white h-1.5 rounded appearance-none
+              flex-1 h-1.5 rounded appearance-none
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-4
               [&::-webkit-slider-thumb]:h-4
@@ -131,19 +132,11 @@ export default function SearchBar({ onSearch, isLoading, prefillQuery, threshold
             aria-label="Score threshold"
           />
           <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300 min-w-[2.5rem] text-right">
-            {threshold.toFixed(2)}
+            {threshold}%
           </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
-          Lower = more results, Higher = more precise
-        </p>
       </div>
 
-      <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">
-        Drag the slider to re-rank results live. Press{" "}
-        <kbd className="keycap font-sans">/</kbd> to focus search,{" "}
-        <kbd className="keycap font-sans">Esc</kbd> to clear
-      </p>
     </form>
   );
 }
