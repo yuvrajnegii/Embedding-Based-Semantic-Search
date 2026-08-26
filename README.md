@@ -82,7 +82,6 @@ embedding1/
 ├── data/
 │   ├── raw/                # Source corpus (AI, climate change, quantum computing .txt files)
 │   └── chroma_db/          # Persisted vector store (generated at runtime)
-├── eval_precision.py       # Precision@5 / Accuracy@1 / MRR evaluation harness
 ├── requirements.txt
 └── env.example
 ```
@@ -163,23 +162,7 @@ By default the frontend expects the API at `http://localhost:8000` (override wit
 
 ### Loading the Sample Corpus
 
-`data/raw/` ships with three sample topic documents (AI, climate change, quantum computing) used by `eval_precision.py`. Ingest them via the `/ingest/file` endpoint or the frontend's upload UI to populate the vector store before searching.
-
-## Evaluation
-
-`eval_precision.py` runs a set of 60 hand-labeled queries (20 per topic; easy/medium/hard, including cross-topic queries) against the live search pipeline and reports:
-
-- **Precision@5** — fraction of the top-5 retrieved chunks belonging to a relevant topic
-- **Accuracy@1** — whether the top-1 chunk is relevant
-- **MRR** — mean reciprocal rank of the first relevant chunk
-
-Run it with the backend's dependencies installed and the sample corpus already ingested:
-
-```bash
-python eval_precision.py
-```
-
-Results are broken down overall, per-topic, and by query difficulty.
+`data/raw/` ships with three sample topic documents (AI, climate change, quantum computing). Ingest them via the `/ingest/file` endpoint or the frontend's upload UI to populate the vector store before searching.
 
 ## Notes
 
