@@ -185,4 +185,3 @@ Results are broken down overall, per-topic, and by query difficulty.
 
 - Re-ingesting a document with the same title/filename overwrites its existing chunks rather than duplicating them.
 - Scanned/image-only PDFs aren't supported — text extraction requires a text layer (no OCR).
-- `DESIGN-raycast.md` in this repo is an unrelated design-system reference file and isn't part of the application.
