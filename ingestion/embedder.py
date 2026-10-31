@@ -1,49 +1,16 @@
-from typing import List, Dict
-from fastembed import TextEmbedding
-import chromadb
-from chromadb.config import Settings
+﻿from typing import List, Dict
 
-
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-CHROMA_PATH = "data/chroma_db"
-COLLECTION_NAME = "documents"
-BATCH_SIZE = 16
-
-_model = None
-
-
-def _get_model():
-    global _model
-    if _model is None:
-        print(f"\nLoading embedding model: {MODEL_NAME}")
-        _model = TextEmbedding(MODEL_NAME)
-    return _model
-
-_model = None
-
-
-def _get_model():
-    global _model
-    if _model is None:
-        print(f"\nLoading embedding model: {MODEL_NAME}")
-        _model = TextEmbedding(MODEL_NAME)
-    return _model
+BATCH_SIZE = 16  # smaller batches keep peak memory low on small servers
 
 
 def embed_and_store(chunks: List[Dict]) -> None:
     """
-<<<<<<< HEAD
     Embed each chunk and upsert into ChromaDB.
     Reuses the model and collection already loaded by backend.search.
     Safe to re-run: existing chunk_ids are overwritten.
     """
-    from backend.search import _get_model, _get_collection  # lazy import avoids circular import
-=======
-    Embed each chunk with fastembed and upsert into ChromaDB.
-    Safe to re-run — existing chunk_ids are overwritten.
-    """
-    model = _get_model()
->>>>>>> c62d482 (reuse embedding model and chroma collection on ingest)
+    # Imported here to avoid a circular import at startup
+    from backend.search import _get_model, _get_collection
 
     model = _get_model()
     collection = _get_collection()
@@ -79,8 +46,4 @@ def embed_and_store(chunks: List[Dict]) -> None:
         done = min(batch_start + BATCH_SIZE, total)
         print(f"  Stored {done}/{total} chunks")
 
-<<<<<<< HEAD
     print(f"Done. Collection now has {collection.count()} entries.")
-=======
-    print(f"\nDone. Collection '{COLLECTION_NAME}' now has {collection.count()} entries.")
->>>>>>> c62d482 (reuse embedding model and chroma collection on ingest)
