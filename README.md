@@ -2,6 +2,12 @@
 
 A full-stack semantic search and RAG (Retrieval-Augmented Generation) application. Upload documents, embed them into a vector store, and search or ask questions over them in natural language — with grounded, streamed answers and cited sources.
 
+## Live Demo
+
+**[Try it here → embedding-based-semantic-search.vercel.app](https://embedding-based-semantic-search.vercel.app/)**
+
+The backend runs on Render's free tier, so if the app has been idle, the first request can take about a minute while the server wakes up. Documents you upload through the demo are not permanent and are cleared when the server restarts.
+
 ## Overview
 
 Traditional keyword search misses queries that are phrased differently from the source text. This project solves that by embedding both documents and queries into the same vector space using a sentence-embedding model, then retrieving chunks by cosine similarity rather than keyword overlap. Retrieved chunks can either be shown directly (semantic search) or passed to an LLM (Groq) to generate a grounded, cited answer (RAG-style "Ask").
