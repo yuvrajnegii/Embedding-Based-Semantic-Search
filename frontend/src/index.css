@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #07080a;
+    --bg-secondary: #0d0d0d;
+    --bg-tertiary: #101111;
+    --text-primary: #f4f4f6;
+    --text-secondary: #cdcdcd;
+    --text-muted: #9c9c9d;
+    --border-color: #242728;
+    --accent-bg: #101111;
+    --accent-text: #f4f4f6;
+    --accent-border: #242728;
+    --success-bg: #14241d;
+    --success-text: #7fd6a9;
+    --success-border: #2f4a3a;
+    --warning-bg: #241f0f;
+    --warning-text: #e6c26a;
+    --warning-border: #4a4028;
+    --error-bg: #291717;
+    --error-text: #e69a9a;
+    --error-border: #523030;
+
+    /* Score bar confidence colors — neutral chrome, not saturated */
+    --score-high: 244 244 246;   /* ink   */
+    --score-mid: 156 156 157;    /* mute  */
+    --score-low: 67 67 69;       /* stone */
+  }
+
+  .dark {
+    --bg-primary: #07080a;
+    --bg-secondary: #0d0d0d;
+    --bg-tertiary: #101111;
+    --text-primary: #f4f4f6;
+    --text-secondary: #cdcdcd;
+    --text-muted: #9c9c9d;
+    --border-color: #242728;
+    --accent-bg: #101111;
+    --accent-text: #f4f4f6;
+    --accent-border: #242728;
+    --success-bg: #14241d;
+    --success-text: #7fd6a9;
+    --success-border: #2f4a3a;
+    --warning-bg: #241f0f;
+    --warning-text: #e6c26a;
+    --warning-border: #4a4028;
+    --error-bg: #291717;
+    --error-text: #e69a9a;
+    --error-border: #523030;
+  }
+
+  * {
+    border-color: var(--border-color);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased;
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "calt", "kern", "liga", "ss03";
+  }
+}
+
+@layer components {
+  /* Primary = white pill (the brand action). */
+  .btn-primary {
+    @apply bg-white text-black font-medium px-4 py-2 rounded-md hover:bg-gray-100 active:scale-[0.98] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07080a];
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-white font-medium px-4 py-2 rounded-md border border-[#242728] hover:bg-white/5 active:scale-[0.98] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07080a];
+  }
+
+  .btn-ghost {
+    @apply text-slate-400 hover:text-white hover:bg-white/5 px-3 py-1.5 rounded-md text-sm transition-colors;
+  }
+
+  .input-base {
+    @apply bg-[#101111] border border-[#242728] rounded-md px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg p-4 transition-colors duration-200;
+  }
+
+  .card-hover {
+    @apply hover:bg-slate-50 dark:hover:bg-gray-800/50 hover:border-slate-300 dark:hover:border-gray-600;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-[#1a1b1d] text-white border border-[#3a3d3e];
+  }
+
+  /* Keyboard shortcut glyph — the brand's only "depth" decoration. */
+  .keycap {
+    @apply inline-flex items-center justify-center px-1.5 h-5 rounded-[4px] border border-[#2a2d2e] text-[11px] text-slate-300;
+    background: linear-gradient(180deg, #121212 0%, #0d0d0d 100%);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #434345 transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #434345;
+    border-radius: 3px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .focus-visible-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07080a];
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
