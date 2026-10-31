@@ -5,6 +5,7 @@ A full-stack semantic search and RAG (Retrieval-Augmented Generation) applicatio
 ## Live Demo
 
 **[Try it here → embedding-based-semantic-search.vercel.app](https://embedding-based-semantic-search.vercel.app/)**
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://embedding-based-semantic-search.vercel.app/)
 
 The backend runs on Render's free tier, so if the app has been idle, the first request can take about a minute while the server wakes up. Documents you upload through the demo are not permanent and are cleared when the server restarts.
 
