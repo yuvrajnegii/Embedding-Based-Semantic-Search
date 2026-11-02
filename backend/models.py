@@ -1,3 +1,9 @@
+# ===== UPDATED FILE  (replace the whole of backend/models.py) =====
+# What changed:
+#   1. AskResponse gains two fields: cached and cache_similarity
+#   2. New class CacheStatsResponse at the bottom
+# ======================================================================
+
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -38,6 +44,8 @@ class AskResponse(BaseModel):
     sources_used: List[str]
     retrieved_chunks: List[ResultItem]
     took_ms: float
+    cached: bool = False
+    cache_similarity: Optional[float] = None
 
 
 class IngestTextRequest(BaseModel):
@@ -69,3 +77,12 @@ class HealthResponse(BaseModel):
     collection_name: str
     total_chunks: int
     embedding_model: str
+
+
+class CacheStatsResponse(BaseModel):
+    enabled: bool
+    entries: int
+    hits: int
+    misses: int
+    hit_rate: float
+    threshold: float
