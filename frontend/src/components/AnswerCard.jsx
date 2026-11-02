@@ -56,7 +56,7 @@ const markdownComponents = {
   hr: () => <hr className="border-slate-200 dark:border-gray-700 my-3" />,
 };
 
-export default function AnswerCard({ answer, sourcesUsed, isStreaming }) {
+export default function AnswerCard({ answer, sourcesUsed, isStreaming, cached }) {
   const { toast } = useToast();
 
   const handleCopy = () => {
@@ -75,8 +75,19 @@ export default function AnswerCard({ answer, sourcesUsed, isStreaming }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <p className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide">AI Answer</p>
+            {cached && (
+              <span
+                className="badge badge-primary bg-violet-500/15 text-violet-200 border-violet-400/30 text-[10px] px-1.5 py-0.5 gap-1 shrink-0 animate-fade-in"
+                title="Served instantly from the semantic cache"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Cached
+              </span>
+            )}
           </div>
         </div>
         <button
