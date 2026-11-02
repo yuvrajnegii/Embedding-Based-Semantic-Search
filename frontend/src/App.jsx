@@ -72,7 +72,7 @@ export default function App() {
 
     try {
       if (mode === "ask") {
-        setAnswer({ text: "", model: "llama-3.1-8b-instant", sourcesUsed: [] });
+        setAnswer({ text: "", model: "openai/gpt-oss-20b", sourcesUsed: [], cached: false });
         const startTime = performance.now();
 
         await streamAsk(
@@ -83,6 +83,7 @@ export default function App() {
               setAnswer((prev) => ({
                 ...prev,
                 sourcesUsed: meta.sources_used,
+                cached: Boolean(meta.cached),
               }));
               setMeta({
                 count: meta.retrieved_chunks.length,
@@ -254,6 +255,7 @@ export default function App() {
             <AnswerCard
               answer={answer.text}
               sourcesUsed={answer.sourcesUsed}
+              cached={answer.cached}
               isStreaming={isLoading && mode === "ask"}
             />
           )}
