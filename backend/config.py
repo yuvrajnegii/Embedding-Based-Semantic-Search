@@ -1,3 +1,7 @@
+# ===== UPDATED FILE  (replace the whole of backend/config.py) =====
+# What changed: new CACHE_* settings at the bottom. Everything above is the same.
+# ======================================================================
+
 import os
 from dotenv import load_dotenv
 
@@ -20,5 +24,15 @@ ALLOWED_ORIGINS = [
     if o.strip()
 ]
 
-# Optional: Groq API key, for a future RAG answer-generation step
+# Groq API key, used for answer generation (/ask and /ask/stream)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
+# Semantic answer cache
+# The cache lives in its own folder so it never gets committed with the corpus.
+CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on")
+CACHE_PATH = os.getenv("CACHE_PATH", "data/cache_db")
+CACHE_COLLECTION = os.getenv("CACHE_COLLECTION", "answer_cache")
+# Minimum cosine similarity between two questions for a cached answer to be reused.
+CACHE_THRESHOLD = float(os.getenv("CACHE_THRESHOLD", "0.93"))
+# Oldest entries are evicted once the cache grows past this size.
+CACHE_MAX_ENTRIES = int(os.getenv("CACHE_MAX_ENTRIES", "500"))
