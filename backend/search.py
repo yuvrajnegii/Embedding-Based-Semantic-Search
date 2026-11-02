@@ -1,12 +1,21 @@
+# ===== UPDATED FILE  (replace the whole of backend/search.py) =====
+# What changed:
+#   1. CHROMA_PATH and COLLECTION_NAME now come from config (were hardcoded)
+#   2. New function embed_query()
+#   3. search() accepts an optional query_embedding so the question is embedded once
+# ======================================================================
+
 import os
 from typing import List, Dict, Optional
 from fastembed import TextEmbedding
 import chromadb
 from chromadb.config import Settings
 
+from backend import config
+
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-CHROMA_PATH = "data/chroma_db"
-COLLECTION_NAME = "documents"
+CHROMA_PATH = config.CHROMA_PATH
+COLLECTION_NAME = config.COLLECTION_NAME
 
 _model: Optional[TextEmbedding] = None
 _collection = None
@@ -34,9 +43,23 @@ def _get_collection():
     return _collection
 
 
-def search(query: str, top_k: int = 5, score_threshold: float = 0.0) -> List[Dict]:
+def embed_query(query: str) -> List[float]:
+    """Embed one query string. Reused by the cache lookup and by search()."""
+    model = _get_model()
+    return [v.tolist() for v in model.embed([query])][0]
+
+
+def search(
+    query: str,
+    top_k: int = 5,
+    score_threshold: float = 0.0,
+    query_embedding: Optional[List[float]] = None,
+) -> List[Dict]:
     """
     Embed the query and return the top_k most similar chunks from ChromaDB.
+
+    If query_embedding is given it is used directly, so a caller that already
+    embedded the query (for the semantic cache) doesn't embed it twice.
 
     ChromaDB returns cosine *distance* (0 = identical, 2 = opposite).
     We convert to a similarity score in [0, 1] where 1 = perfect match,
@@ -45,13 +68,13 @@ def search(query: str, top_k: int = 5, score_threshold: float = 0.0) -> List[Dic
     if not query or not query.strip():
         return []
 
-    model = _get_model()
     collection = _get_collection()
 
-    query_embedding = [v.tolist() for v in model.embed([query])]
+    if query_embedding is None:
+        query_embedding = embed_query(query)
 
     results = collection.query(
-        query_embeddings=query_embedding,
+        query_embeddings=[query_embedding],
         n_results=top_k,
     )
 
@@ -83,7 +106,7 @@ def search(query: str, top_k: int = 5, score_threshold: float = 0.0) -> List[Dic
 
 def list_topics() -> List[str]:
     """
-    Return the distinct list of filenames currently stored in ChromaDB —
+    Return the distinct list of filenames currently stored in ChromaDB,
     i.e. every topic the corpus can currently answer questions about.
     """
     collection = _get_collection()
