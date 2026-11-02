@@ -1,3 +1,13 @@
+# ===== UPDATED FILE  (replace the whole of backend/main.py) =====
+# What changed:
+#   1. Imports cache, embed_query and CacheStatsResponse
+#   2. /ask and /ask/stream check the cache first and store finished answers
+#   3. /ingest/text, /ingest/file and DELETE /topics clear the cache
+#   4. New endpoint GET /cache/stats
+#   5. Startup also warms the cache; root() shows the cache flag
+# Unchanged: your CORS regex and groq_model on the root endpoint are kept.
+# ======================================================================
+
 import time
 import json
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -5,8 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from backend import config
-from backend.models import SearchRequest, SearchResponse, HealthResponse, AskRequest, AskResponse, IngestTextRequest, IngestResponse, TopicsResponse, DeleteTopicResponse
-from backend.search import search, get_collection_stats, list_topics, delete_topic
+from backend import cache
+from backend.models import (
+    SearchRequest, SearchResponse, HealthResponse, AskRequest, AskResponse,
+    IngestTextRequest, IngestResponse, TopicsResponse, DeleteTopicResponse,
+    CacheStatsResponse,
+)
+from backend.search import search, get_collection_stats, list_topics, delete_topic, embed_query
 from backend.generate import generate_answer, generate_answer_stream
 from backend.file_ingest import ingest_file_bytes
 from backend.paste_ingest import ingest_paste
@@ -15,7 +30,7 @@ from backend.search import _get_model, _get_collection
 app = FastAPI(
     title="Semantic Search API",
     description="Embedding-based semantic search over your document corpus",
-    version="1.0.0",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -29,9 +44,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def preload_resources():
-    print("Preloading embedding model and ChromaDB collection...")
+    print("Preloading embedding model, ChromaDB collection and answer cache...")
     _get_model()
     _get_collection()
+    cache.warm()
     print("Ready.")
 
 
@@ -42,6 +58,14 @@ def health():
         return HealthResponse(status="ok", **stats)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Health check failed: {e}")
+
+
+@app.get("/cache/stats", response_model=CacheStatsResponse)
+def cache_stats_endpoint():
+    try:
+        return CacheStatsResponse(**cache.stats())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache stats failed: {e}")
 
 
 @app.post("/search", response_model=SearchResponse)
@@ -67,15 +91,70 @@ def search_endpoint(request: SearchRequest):
     )
 
 
+def _embed_and_lookup(request: AskRequest):
+    """Embed the question once, then check the cache. Returns (embedding, hit)."""
+    try:
+        query_embedding = embed_query(request.query)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Embedding failed: {e}")
+
+    # A cache problem must never break Ask, so fall back to a normal miss.
+    try:
+        hit = cache.lookup(query_embedding, request.top_k, request.score_threshold)
+    except Exception as e:
+        print(f"Cache lookup failed, continuing without it: {e}")
+        hit = None
+
+    return query_embedding, hit
+
+
+def _safe_store(request, query_embedding, answer, sources_used, chunks):
+    try:
+        cache.store(
+            query=request.query,
+            query_embedding=query_embedding,
+            top_k=request.top_k,
+            score_threshold=request.score_threshold,
+            answer=answer,
+            sources_used=sources_used,
+            chunks=chunks,
+        )
+    except Exception as e:
+        print(f"Cache store failed, continuing without it: {e}")
+
+
+def _safe_clear_cache():
+    try:
+        cache.clear()
+    except Exception as e:
+        print(f"Cache clear failed: {e}")
+
+
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(request: AskRequest):
     start = time.time()
+
+    query_embedding, hit = _embed_and_lookup(request)
+
+    if hit:
+        took_ms = round((time.time() - start) * 1000, 1)
+        return AskResponse(
+            query=request.query,
+            answer=hit["answer"],
+            model=hit["model"],
+            sources_used=hit["sources_used"],
+            retrieved_chunks=hit["retrieved_chunks"],
+            took_ms=took_ms,
+            cached=True,
+            cache_similarity=hit["similarity"],
+        )
 
     try:
         chunks = search(
             query=request.query,
             top_k=request.top_k,
             score_threshold=request.score_threshold,
+            query_embedding=query_embedding,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retrieval failed: {e}")
@@ -86,6 +165,8 @@ def ask_endpoint(request: AskRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Answer generation failed: {e}")
+
+    _safe_store(request, query_embedding, result["answer"], result["sources_used"], chunks)
 
     took_ms = round((time.time() - start) * 1000, 1)
 
@@ -101,11 +182,31 @@ def ask_endpoint(request: AskRequest):
 
 @app.post("/ask/stream")
 def ask_stream_endpoint(request: AskRequest):
+    query_embedding, hit = _embed_and_lookup(request)
+
+    # Cache hit: replay the stored answer using the same SSE event shapes,
+    # so the frontend needs no special handling beyond the "cached" flag.
+    if hit:
+        def cached_events():
+            metadata = {
+                "type": "metadata",
+                "sources_used": hit["sources_used"],
+                "retrieved_chunks": hit["retrieved_chunks"],
+                "cached": True,
+                "cache_similarity": hit["similarity"],
+            }
+            yield f"data: {json.dumps(metadata)}\n\n"
+            yield f"data: {json.dumps({'type': 'token', 'text': hit['answer']})}\n\n"
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+        return StreamingResponse(cached_events(), media_type="text/event-stream")
+
     try:
         chunks = search(
             query=request.query,
             top_k=request.top_k,
             score_threshold=request.score_threshold,
+            query_embedding=query_embedding,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retrieval failed: {e}")
@@ -118,17 +219,23 @@ def ask_stream_endpoint(request: AskRequest):
             "type": "metadata",
             "sources_used": sources_used,
             "retrieved_chunks": chunks,
+            "cached": False,
         }
         yield f"data: {json.dumps(metadata)}\n\n"
 
+        parts = []
         try:
             for token in generate_answer_stream(request.query, chunks):
+                parts.append(token)
                 payload = {"type": "token", "text": token}
                 yield f"data: {json.dumps(payload)}\n\n"
         except Exception as e:
             error_payload = {"type": "error", "message": str(e)}
             yield f"data: {json.dumps(error_payload)}\n\n"
             return
+
+        # Only a fully generated answer is cached; errors and partial answers are not.
+        _safe_store(request, query_embedding, "".join(parts), sources_used, chunks)
 
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
@@ -145,6 +252,7 @@ def ingest_text_endpoint(request: IngestTextRequest):
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
 
+    _safe_clear_cache()  # corpus changed, so cached answers may be stale
     return IngestResponse(**result)
 
 
@@ -165,6 +273,7 @@ async def ingest_file_endpoint(file: UploadFile = File(...)):
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
 
+    _safe_clear_cache()  # corpus changed, so cached answers may be stale
     return IngestResponse(**result)
 
 
@@ -185,6 +294,9 @@ def delete_topic_endpoint(topic_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Delete failed: {e}")
 
+    if result.get("success"):
+        _safe_clear_cache()  # corpus changed, so cached answers may be stale
+
     return DeleteTopicResponse(**result)
 
 
@@ -195,7 +307,9 @@ def root():
         "docs": "/docs",
         "health": "/health",
         "groq_model": config.GROQ_MODEL,
+        "cache": config.CACHE_ENABLED,
     }
+
 
 if __name__ == "__main__":
     import uvicorn
