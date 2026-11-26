@@ -32,10 +32,6 @@ app = FastAPI(
     description="Embedding-based semantic search over your document corpus",
     version="1.1.0",
 )
-import logging
-logging.basicConfig(level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-logger = logging.getLogger(__name__)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.ALLOWED_ORIGINS,
