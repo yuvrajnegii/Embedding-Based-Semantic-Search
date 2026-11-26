@@ -1,15 +1,6 @@
-# ===== UPDATED FILE  (replace the whole of backend/main.py) =====
-# What changed:
-#   1. Imports cache, embed_query and CacheStatsResponse
-#   2. /ask and /ask/stream check the cache first and store finished answers
-#   3. /ingest/text, /ingest/file and DELETE /topics clear the cache
-#   4. New endpoint GET /cache/stats
-#   5. Startup also warms the cache; root() shows the cache flag
-# Unchanged: your CORS regex and groq_model on the root endpoint are kept.
-# ======================================================================
-
 import time
 import json
+import logging
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -27,11 +18,18 @@ from backend.file_ingest import ingest_file_bytes
 from backend.paste_ingest import ingest_paste
 from backend.search import _get_model, _get_collection
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title="Semantic Search API",
     description="Embedding-based semantic search over your document corpus",
     version="1.1.0",
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.ALLOWED_ORIGINS,
@@ -43,11 +41,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 def preload_resources():
-    print("Preloading embedding model, ChromaDB collection and answer cache...")
+    logger.info("Preloading embedding model, ChromaDB collection and answer cache...")
     _get_model()
     _get_collection()
     cache.warm()
-    print("Ready.")
+    logger.info("Ready.")
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -78,6 +76,7 @@ def search_endpoint(request: SearchRequest):
             score_threshold=request.score_threshold,
         )
     except Exception as e:
+        logger.exception("Search failed")
         raise HTTPException(status_code=500, detail=f"Search failed: {e}")
 
     took_ms = round((time.time() - start) * 1000, 1)
@@ -95,13 +94,14 @@ def _embed_and_lookup(request: AskRequest):
     try:
         query_embedding = embed_query(request.query)
     except Exception as e:
+        logger.exception("Embedding failed")
         raise HTTPException(status_code=500, detail=f"Embedding failed: {e}")
 
     # A cache problem must never break Ask, so fall back to a normal miss.
     try:
         hit = cache.lookup(query_embedding, request.top_k, request.score_threshold)
     except Exception as e:
-        print(f"Cache lookup failed, continuing without it: {e}")
+        logger.warning("Cache lookup failed, continuing without it: %s", e)
         hit = None
 
     return query_embedding, hit
@@ -119,24 +119,26 @@ def _safe_store(request, query_embedding, answer, sources_used, chunks):
             chunks=chunks,
         )
     except Exception as e:
-        print(f"Cache store failed, continuing without it: {e}")
+        logger.warning("Cache store failed, continuing without it: %s", e)
 
 
 def _safe_clear_cache():
     try:
         cache.clear()
     except Exception as e:
-        print(f"Cache clear failed: {e}")
+        logger.warning("Cache clear failed: %s", e)
 
 
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(request: AskRequest):
     start = time.time()
+    logger.info("POST /ask query_len=%d top_k=%d", len(request.query), request.top_k)
 
     query_embedding, hit = _embed_and_lookup(request)
 
     if hit:
         took_ms = round((time.time() - start) * 1000, 1)
+        logger.info("/ask served from cache in %.1f ms", took_ms)
         return AskResponse(
             query=request.query,
             answer=hit["answer"],
@@ -156,6 +158,7 @@ def ask_endpoint(request: AskRequest):
             query_embedding=query_embedding,
         )
     except Exception as e:
+        logger.exception("Retrieval failed")
         raise HTTPException(status_code=500, detail=f"Retrieval failed: {e}")
 
     try:
@@ -163,11 +166,13 @@ def ask_endpoint(request: AskRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.exception("Answer generation failed")
         raise HTTPException(status_code=500, detail=f"Answer generation failed: {e}")
 
     _safe_store(request, query_embedding, result["answer"], result["sources_used"], chunks)
 
     took_ms = round((time.time() - start) * 1000, 1)
+    logger.info("/ask answered in %.1f ms, chunks=%d", took_ms, len(chunks))
 
     return AskResponse(
         query=request.query,
@@ -181,6 +186,7 @@ def ask_endpoint(request: AskRequest):
 
 @app.post("/ask/stream")
 def ask_stream_endpoint(request: AskRequest):
+    logger.info("POST /ask/stream query_len=%d top_k=%d", len(request.query), request.top_k)
     query_embedding, hit = _embed_and_lookup(request)
 
     # Cache hit: replay the stored answer using the same SSE event shapes,
@@ -208,6 +214,7 @@ def ask_stream_endpoint(request: AskRequest):
             query_embedding=query_embedding,
         )
     except Exception as e:
+        logger.exception("Retrieval failed")
         raise HTTPException(status_code=500, detail=f"Retrieval failed: {e}")
 
     def event_generator():
@@ -229,6 +236,7 @@ def ask_stream_endpoint(request: AskRequest):
                 payload = {"type": "token", "text": token}
                 yield f"data: {json.dumps(payload)}\n\n"
         except Exception as e:
+            logger.exception("Streaming answer failed")
             error_payload = {"type": "error", "message": str(e)}
             yield f"data: {json.dumps(error_payload)}\n\n"
             return
@@ -246,11 +254,13 @@ def ingest_text_endpoint(request: IngestTextRequest):
     try:
         result = ingest_paste(title=request.title, text=request.text)
     except Exception as e:
+        logger.exception("Text ingestion failed")
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {e}")
 
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
 
+    logger.info("Ingestion succeeded")
     _safe_clear_cache()  # corpus changed, so cached answers may be stale
     return IngestResponse(**result)
 
@@ -267,11 +277,13 @@ async def ingest_file_endpoint(file: UploadFile = File(...)):
     try:
         result = ingest_file_bytes(file.filename, file_bytes)
     except Exception as e:
+        logger.exception("File ingestion failed")
         raise HTTPException(status_code=500, detail=f"File ingestion failed: {e}")
 
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
 
+    logger.info("Ingestion succeeded")
     _safe_clear_cache()  # corpus changed, so cached answers may be stale
     return IngestResponse(**result)
 
