@@ -6,12 +6,15 @@
 # ======================================================================
 
 import os
+import logging
 from typing import List, Dict, Optional
 from fastembed import TextEmbedding
 import chromadb
 from chromadb.config import Settings
 
 from backend import config
+
+logger = logging.getLogger(__name__)
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 CHROMA_PATH = config.CHROMA_PATH
@@ -24,7 +27,7 @@ _collection = None
 def _get_model() -> TextEmbedding:
     global _model
     if _model is None:
-        print(f"Loading embedding model: {MODEL_NAME}")
+        logger.info("Loading embedding model: %s", MODEL_NAME)
         _model = TextEmbedding(MODEL_NAME)
     return _model
 
